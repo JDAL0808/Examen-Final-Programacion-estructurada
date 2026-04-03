@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "verificacion.h"
+
 int main() {
     pid_t pid = fork(); // Crear hijo una sola vez
     if (pid < 0) {
@@ -21,9 +23,14 @@ int main() {
         pthread_t hiloOutbox;
         pthread_t hiloInbox;
 
-        // Crear hilos (sin lógica, solo estructura)
+        /* Crear hilos (sin lógica, solo estructura)
         pthread_create(&hiloOutbox, NULL, NULL, NULL);
         pthread_create(&hiloInbox, NULL, NULL, NULL);
+        */
+        //ONIL hilo que revisa peticiones de clientes
+        pthread_create(&hiloInbox, NULL, hilo_verificar_inbox, NULL);
+        pthread_create(&hiloOutbox, NULL, hilo_verificar_respuestas, NULL);
+
 
         while (1) {
             printf("Hola mundo\n");

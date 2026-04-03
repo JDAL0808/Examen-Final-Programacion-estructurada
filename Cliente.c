@@ -3,13 +3,17 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "estado.h"
+#include "verificacion.h"
+
 int main() {
     pthread_t hiloInbox;
     pthread_t hiloOutbox;
 
-    // Crear hilos (solo estructura, sin lógica)
+    /* Crear hilos (solo estructura, sin lógica)
     pthread_create(&hiloInbox, NULL, NULL, NULL);
     pthread_create(&hiloOutbox, NULL, NULL, NULL);
+    */
 
     char Nombre[50];
     char comando[100];
@@ -17,6 +21,13 @@ int main() {
     // Pedir nombre solo una vez
     printf("Escriba su nombre: \n");
     scanf("%49s", Nombre);
+
+    //ONIL Registrar como activo
+    registrar_estado_activo(Nombre);
+
+    //ONIL Crear hilos (yo los cree despues del login, no se si afecta en algo)
+    pthread_create(&hiloInbox, NULL, hilo_verificar_inbox, NULL);
+    pthread_create(&hiloOutbox, NULL, hilo_verificar_respuestas, NULL);
 
     // Mostrar comandos solo una vez
     printf("Comandos: \n");
