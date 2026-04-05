@@ -7,4 +7,5 @@ add_executable(Examen_III Servidor.c
         verificacion.c
         verificacion.h
         estado.c
-        estado.h)
+        estado.h
+        Funciones_server.c)

@@ -1,4 +1,5 @@
 #include "Funciones_server.h"
+#include "estado.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -79,4 +80,87 @@ void registrar_cliente_binario(const char *nombre, int pid) {
     }
     
     pthread_mutex_unlock(&mutex_registrados);
+}
+
+// Escribe un mensaje en el inbox del usuario correspondiente
+void escribirInbox(char *usuario, char *mensaje) {
+    char ruta[200];
+
+    sprintf(ruta, "data/inbox/%s.txt", usuario);
+
+    FILE *f = fopen(ruta, "a");
+    if (!f) {
+        printf("Error al abrir inbox de %s\n", usuario);
+        return;
+    }
+
+    fprintf(f, "%s\n", mensaje);
+
+    fclose(f);
+}
+
+// Lista los usuarios conectados y envía el resultado al inbox del solicitante
+void listar(char *usuario) {
+    pthread_mutex_lock(&mutex_estado);
+
+    FILE *f = fopen("data/conectados.txt", "r");
+    if (!f) {
+        pthread_mutex_unlock(&mutex_estado);
+        return;
+    }
+
+    char linea[100];
+    char respuesta[1000] = "Usuarios conectados:\n";
+
+    while (fgets(linea, sizeof(linea), f)) {
+        strcat(respuesta, "- ");
+        strcat(respuesta, linea);
+    }
+
+    fclose(f);
+    pthread_mutex_unlock(&mutex_estado);
+
+    escribirInbox(usuario, respuesta);
+
+    char logMsg[300];
+    sprintf(logMsg, "%s listó los clientes conectados", usuario);
+    escribir_bitacora(logMsg);
+}
+
+
+// Maneja la desconexión de un usuario eliminándolo de la lista y registrando el evento
+void logout(char *usuario) {
+    pthread_mutex_lock(&mutex_estado);
+
+    eliminar_estado_activo(usuario);
+
+    char logMsg[200];
+    snprintf(logMsg, sizeof(logMsg), "Usuario desconectado: %s", usuario);
+
+    escribir_bitacora(logMsg);
+
+    printf("Logout: %s\n", usuario);
+
+    pthread_mutex_unlock(&mutex_estado);
+}
+
+
+
+// Envía un mensaje privado de un usuario a otro y registra la acción
+void manejarPrivado(char *emisor, char *destino, char *mensaje) {
+    if (!usuario_esta_activo(destino)) {
+        char error[200];
+        sprintf(error, "Error: el usuario %s no existe", destino);
+        escribirInbox(emisor, error);
+        return;
+    }
+
+    char msg[300];
+    sprintf(msg, "[PRIVADO] %s: %s", emisor, mensaje);
+
+    escribirInbox(destino, msg);
+
+    char logMsg[300];
+    sprintf(logMsg, "%s -> %s: %s", emisor, destino, mensaje);
+    escribir_bitacora(logMsg);
 }
